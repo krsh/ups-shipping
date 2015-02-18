@@ -16,6 +16,7 @@ module Shipping
     def build(xml, rootname)
       xml.send(rootname) {
         xml.CompanyName @name
+        xml.Name @name
         xml.PhoneNumber @phone
         if @shipper_number
           xml.ShipperNumber @shipper_number

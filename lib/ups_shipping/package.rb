@@ -2,13 +2,14 @@ require "nokogiri"
 
 module Shipping
   class Package
-    attr_accessor :large, :weight, :description, :monetary_value
+    attr_accessor :length, :width, :height , :weight, :description
 
     def initialize(options={})
-      @large = options[:large]
+      @length = options[:length]
+      @width = options[:width]
+      @height= options[:height]
       @weight = options[:weight]
       @description = options[:description]
-      @monetary_value = options[:monetary_value]
     end
 
     def build(xml)
@@ -23,12 +24,20 @@ module Shipping
           xml.Value "Package"
         }
         xml.PackageWeight {
-          xml.UnitOfMeasurement
+          xml.UnitOfMeasurement{
+            xml.Code "LBS"
+          }
           xml.Weight @weight
         }
-        if @large
-          xml.LargePackageIndicator
-        end
+
+        xml.Dimensions {
+          xml.UnitOfMeasurement{
+            xml.Code "IN"
+          }
+          xml.Length @length
+          xml.Width @width
+          xml.Height @height
+        }
       }
     end
 

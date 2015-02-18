@@ -7,7 +7,7 @@ require 'ups_shipping/pickup'
 
 module Shipping
 
-  VERSION = '1.0.2'
+  VERSION = '1.1.0'
 
   class UPS
 
@@ -59,108 +59,64 @@ module Shipping
       }
     end
 
-    def validate_address(address)
-      validate_request = Nokogiri::XML::Builder.new do |xml|
-        xml.AddressValidationRequest {
-          xml.Request {
-            xml.TransactionReference {
-              xml.CustomerContext
-              xml.XpciVersion 1.0001
-            }
-            xml.RequestAction "XAV"
-            xml.RequestOption "3"
-          }
-          xml.MaximumListSize 3
-          xml.AddressKeyFormat {
-            xml.AddressLine address.address_lines[0]
-            xml.PoliticalDivision2 address.city
-            xml.PoliticalDivision1 address.state
-            xml.PostcodePrimaryLow address.zip
-            xml.CountryCode address.country
-          }
-        }
-      end
-      @http.commit("/ups.app/xml/XAV", validate_request.to_xml)
-    end
-
-    def find_rates(package, origin, destination, options={})
-      rate_request = Nokogiri::XML::Builder.new do |xml|
-        xml.RatingServiceSelectionRequest {
-          xml.Request {
-            xml.RequestAction "Rate"
-            xml.RequestOption "Rate"
-          }
-          if options[:pickup]
-            @options[:pickup].build_type(xml)
-          end
-          @shipper.build(xml, "Shipper")
-          destination.build(xml, "ShipTo")
-          origin.build(xml, "ShipFrom")
-          xml.PaymentInformation {
-            xml.Prepaid {
-              xml.BillShipper {
-                xml.AccountNumber "Ship Number"
-              }
-            }
-          }
-          package.build(xml)
-        }
-      end
-      @http.commit("/ups.app/xml/Rate", rate_request.to_xml)
-    end
-
-    def request_shipment(package, origin, destination, service, options={})
+    def request_shipment(packages, origin, destination, service, options={})
+      @shipper ||= origin
       shipment_request = Nokogiri::XML::Builder.new do |xml|
         xml.ShipmentConfirmRequest {
           xml.Request {
             xml.RequestAction "ShipConfirm"
-            xml.RequestOptions "validate"
+            xml.RequestOption "validate"
           }
-          if options[:label]
-            xml.LabelSpecification {
-              xml.LabelPrintMethod {
-                xml.Code "GIF"
-                xml.Description "gif file"
-              }
-              xml.HTTPUserAgent "Mozilla/4.5"
-              xml.LabelImageFormat {
-                xml.Code "GIF"
-                xml.Description "gif"
-              }
+          xml.LabelSpecification {
+            xml.LabelPrintMethod {
+              xml.Code "GIF"
+              xml.Description "gif file"
             }
-          end
-          @shipper.build(xml, "Shipper")
-          destination.build(xml, "ShipTo")
-          origin.build(xml, "ShipFrom")
-          xml.PaymentInformation {
-            xml.Prepaid {
-              xml.BillShipper {
-                xml.AccountNumber "Ship Number"
-              }
+            xml.HTTPUserAgent "Mozilla/4.5"
+            xml.LabelImageFormat {
+              xml.Code "GIF"
+              xml.Description "gif"
             }
           }
-          xml.Service {
-            xml.Code service
-            xml.Description @services[service]
+          xml.Shipment {
+            @shipper.build(xml, "Shipper")
+            destination.build(xml, "ShipTo")
+            origin.build(xml, "ShipFrom")
+            xml.PaymentInformation {
+              xml.Prepaid {
+                xml.BillShipper {
+                  xml.AccountNumber @shipper.shipper_number
+                }
+              }
+            }
+            xml.Service {
+              xml.Code service
+              xml.Description @services[service]
+            }
+            packages.each do |package|
+              package.build(xml)
+            end
           }
-          package.build(xml)
         }
       end
       @http.commit("/ups.app/xml/ShipConfirm", shipment_request.to_xml)
     end
 
-    def cancel_shipment(shipment_id)
-      cancel_request = Nokogiri::XML::Builder.new do |xml|
-        xml.VoidShipmentRequest {
+    def accept_shipment(digest)
+      accept_request = Nokogiri::XML::Builder.new do |xml|
+        xml.ShipmentAcceptRequest {
           xml.Request {
-            xml.RequestAction "1"
+            xml.RequestAction "ShipAccept"
             xml.RequestOption "1"
           }
-          xml.ShipmentIdentificationNumber shipment_id
+          xml.ShipmentDigest digest
         }
+
       end
-      @http.commit("/ups.app/xml/Void", cancel_request.to_xml)
+      @http.commit("/ups.app/xml/ShipAccept", accept_request.to_xml)
+
     end
+
 
     def track_shipment(tracking_number)
       track_request = Nokogiri::XML::Builder.new do
