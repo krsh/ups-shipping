@@ -2,9 +2,10 @@ require "nokogiri"
 
 module Shipping
   class Organization
-    attr_accessor :name, :phone, :email, :address, :shipper_number
+    attr_accessor :company_name, :name, :phone, :email, :address, :shipper_number
 
     def initialize(options={})
+      @company_name = options[:company_name]
       @name = options[:name]
       @phone = options[:phone]
       @address = options[:address]
@@ -15,8 +16,8 @@ module Shipping
 
     def build(xml, rootname)
       xml.send(rootname) {
-        xml.CompanyName @name
-        xml.Name @name
+        xml.CompanyName @company_name
+        xml.AttentionName @name
         xml.PhoneNumber @phone
         if @shipper_number
           xml.ShipperNumber @shipper_number

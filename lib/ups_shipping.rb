@@ -2,6 +2,7 @@ require "nokogiri"
 require "httparty"
 require 'ups_shipping/address'
 require 'ups_shipping/organization'
+require 'ups_shipping/shipper'
 require 'ups_shipping/package'
 require 'ups_shipping/pickup'
 
@@ -28,6 +29,8 @@ module Shipping
 
       def commit(url, request)
         request = @access_request + request
+
+        puts request
         self.class.post(url, :body => request).parsed_response
       end
     end
@@ -60,7 +63,6 @@ module Shipping
     end
 
     def request_shipment(packages, origin, destination, service, options={})
-      @shipper ||= origin
       shipment_request = Nokogiri::XML::Builder.new do |xml|
         xml.ShipmentConfirmRequest {
           xml.Request {
@@ -107,7 +109,6 @@ module Shipping
         xml.ShipmentAcceptRequest {
           xml.Request {
             xml.RequestAction "ShipAccept"
-            xml.RequestOption "1"
           }
           xml.ShipmentDigest digest
         }

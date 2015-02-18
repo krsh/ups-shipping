@@ -17,6 +17,7 @@ module Shipping
     def build(xml)
       xml.Address {
         xml.AddressLine1 @address_lines[0]
+        xml.AddressLine2 @address_lines[1]
         xml.City @city
         xml.StateProvinceCode @state
         xml.PostalCode @zip
