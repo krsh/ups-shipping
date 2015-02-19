@@ -56,11 +56,13 @@ module Shipping
         "83" => "UPS Today Dedicated Courier",
         "84" => "UPS Today Intercity",
         "85" => "UPS Today Express",
-        "86" => "UPS Today Express Saver"
+        "86" => "UPS Today Express Saver",
+        "96" => "UPS Worldwide Express Freight"
       }
     end
 
     def request_shipment(packages, origin, destination, service, options={})
+      saturday_delivery = options[:saturday_delivery]
       shipment_request = Nokogiri::XML::Builder.new do |xml|
         xml.ShipmentConfirmRequest {
           xml.Request {
@@ -93,6 +95,11 @@ module Shipping
               xml.Code service
               xml.Description @services[service]
             }
+            if(saturday_delivery) 
+              xml.ShipmentServiceOptions {
+                xml.SaturdayDelivery
+              }
+            end
             packages.each do |package|
               package.build(xml)
             end
