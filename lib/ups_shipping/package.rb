@@ -2,7 +2,7 @@ require "nokogiri"
 
 module Shipping
   class Package
-    attr_accessor :length, :width, :height , :weight, :description
+    attr_accessor :length, :width, :height , :weight, :description, :reference
 
     def initialize(options={})
       @length = options[:length]
@@ -10,6 +10,7 @@ module Shipping
       @height= options[:height]
       @weight = options[:weight]
       @description = options[:description]
+      @reference = options[:reference]
     end
 
     def build(xml)
@@ -21,7 +22,7 @@ module Shipping
         xml.Description @description
         xml.ReferenceNumber {
           xml.Code "00"
-          xml.Value "Package"
+          xml.Value @reference || "Package"
         }
         xml.PackageWeight {
           xml.UnitOfMeasurement{
