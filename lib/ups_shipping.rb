@@ -8,8 +8,6 @@ require 'ups_shipping/pickup'
 
 module Shipping
 
-  VERSION = '1.1.0'
-
   class UPS
 
     TEST_URL = "https://wwwcie.ups.com"

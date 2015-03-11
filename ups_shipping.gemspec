@@ -1,5 +1,5 @@
 $:.unshift File.expand_path("../lib", __FILE__)
-require 'ups_shipping'
+require 'ups_shipping/version'
 
 Gem::Specification.new do |gem|
   gem.name    = "ups_shipping"
