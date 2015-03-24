@@ -39,12 +39,14 @@ module Shipping
           xml.Width @width
           xml.Height @height
         }
-        xml.PackageServiceOptions{
-          xml.InsuredValue{
-            xml.CurrencyCode "USD"
-            xml.MonetaryValue @monetary_value || "1.0"
+        if @monetary_value
+          xml.PackageServiceOptions{
+            xml.InsuredValue{
+              xml.CurrencyCode "USD"
+              xml.MonetaryValue @monetary_value
+            }
           }
-        }
+        end
       }
     end
 
