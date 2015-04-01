@@ -2,7 +2,7 @@ require "nokogiri"
 
 module Shipping
   class Package
-    attr_accessor :length, :width, :height , :weight, :description, :reference, :monetary_value
+    attr_accessor :length, :width, :height , :weight, :description, :reference, :monetary_value, :delivery_confirmation
 
     def initialize(options={})
       @length = options[:length]
@@ -12,6 +12,7 @@ module Shipping
       @description = options[:description]
       @reference = options[:reference]
       @monetary_value = options[:monetary_value]
+      @delivery_confirmation = options[:delivery_confirmation]
     end
 
     def build(xml)
@@ -39,14 +40,17 @@ module Shipping
           xml.Width @width
           xml.Height @height
         }
-        if @monetary_value
-          xml.PackageServiceOptions{
-            xml.InsuredValue{
-              xml.CurrencyCode "USD"
-              xml.MonetaryValue @monetary_value
-            }
+        xml.PackageServiceOptions{
+          xml.InsuredValue{
+            xml.CurrencyCode "USD"
+            xml.MonetaryValue @monetary_value || "0.0"
           }
-        end
+          if @delivery_confirmation
+            xml.DeliveryConfirmation {
+              DCISType @delivery_confirmation
+            }
+          end
+        }
       }
     end
 
