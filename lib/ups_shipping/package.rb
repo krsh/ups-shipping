@@ -47,7 +47,7 @@ module Shipping
           }
           if @delivery_confirmation
             xml.DeliveryConfirmation {
-              DCISType @delivery_confirmation
+              xml.DCISType @delivery_confirmation
             }
           end
         }
